@@ -2108,16 +2108,26 @@ app.get('/api/public/room-availability', (req, res) => {
            SUM(CASE WHEN u.id IS NULL THEN 1 ELSE 0 END) AS vacant
     FROM rooms r
     LEFT JOIN users u ON u.room_id = r.id AND u.role = 'tenant'
-    WHERE r.type IN ('ห้องแอร์','ห้องแอร์บิวท์อิน')
     GROUP BY r.type
   `;
   db.all(sql, [], (err, rows) => {
     if (err) return res.status(500).json({ error: 'DB error' });
-    const byType = Object.fromEntries((rows || []).map(r => [r.type, { total: Number(r.total)||0, vacant: Number(r.vacant)||0 }]));
-    const mapKey = (label) => (label === 'ห้องแอร์บิวท์อิน' ? 'air_built_in' : (label === 'ห้องแอร์' ? 'air' : label));
+
     const result = { air: { total: 0, vacant: 0 }, air_built_in: { total: 0, vacant: 0 } };
-    for (const [label, counts] of Object.entries(byType)) result[mapKey(label)] = counts;
+    (rows || []).forEach(r => {
+      const s = String(r.type || '').toLowerCase();
+      // จับทุกสกุลของ "บิวท์/บิ้ว/built"
+      const key =
+        /บิว|บิ้ว|built/.test(s) ? 'air_built_in' :
+        /แอร์|air/.test(s)      ? 'air' :
+        null;
+      if (key) {
+        result[key].total  += Number(r.total)  || 0;
+        result[key].vacant += Number(r.vacant) || 0;
+      }
+    });
     res.json(result);
   });
 });
+
 
