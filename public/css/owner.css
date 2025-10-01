@@ -963,6 +963,22 @@ button:disabled, .btn:disabled, .add-tenant-btn:disabled, .export-btn:disabled, 
   display: inline-block;
 }
 
+/* pretty badge: รอรับเรื่อง */
+.status-badge.repair-await{
+  background:#fff7e6;          /* เหลืองอ่อน */
+  color:#B25E09;                /* ข้อความโทนส้มเข้ม */
+  border:1px solid #ffd8a8;     /* กรอบบาง ๆ */
+  box-shadow:0 1px 0 rgba(0,0,0,.03), inset 0 1px 0 #fff;
+  display:inline-flex; align-items:center; gap:8px;
+  padding:6px 10px; border-radius:999px; font-weight:600;
+}
+.status-badge.repair-await .dot{
+  width:8px; height:8px; border-radius:50%;
+  background:#f59e0b;          /* จุดสถานะ */
+  box-shadow:0 0 0 3px rgba(245,158,11,.18);
+}
+
+
 @media (max-width: 768px) {
   .tenant-table {
     display: block;

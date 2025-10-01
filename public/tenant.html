@@ -95,6 +95,66 @@
             .info-group label { display: block; font-weight: 500; margin-bottom: 0.5rem; color: var(--text-light); }
             .info-group .value-display { width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 8px; background-color: #f8f9fa; color: var(--text-dark); font-size: 1rem; }
             .profile-actions { text-align: right; margin-top: 2rem; }
+
+/* จัดเลย์เอาต์ให้การ์ดซ้อนกันเป็นคอลัมน์ */
+.repair-card {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+}
+
+/* header ของการ์ด: ชื่อประเภทซ้าย / ชิปสถานะขวา */
+.repair-card .repair-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+/* โทนทั้งแถวเมื่อ "รอรับเรื่อง" */
+.repair-card.is-await {
+  border-left: 4px solid #f59e0b;
+  background: #fffaf1;
+}
+
+/* ชิปสถานะพื้นฐาน (ถ้าในไฟล์เดิมมีแล้ว ปล่อยไว้ได้) */
+.status-badge {
+  padding: .4rem .9rem;
+  border-radius: 999px;
+  font-size: .85rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+/* รอรับเรื่อง = เหลืองอ่อน + บังคับสีตัวอักษรให้ตัดฉาก !important */
+.status-badge.repair-await{
+  background:#fff7e6;
+  color:#B25E09 !important;
+  border:1px solid #ffd8a8;
+  box-shadow:0 1px 0 rgba(0,0,0,.03), inset 0 1px 0 #fff;
+}
+
+/* จุดกระพริบเบา ๆ */
+.status-badge.repair-await .dot{
+  width:8px; height:8px; border-radius:50%;
+  background:#f59e0b;
+  box-shadow:0 0 0 3px rgba(245,158,11,.18);
+  animation:pulse-await 1.6s ease-in-out infinite;
+}
+@keyframes pulse-await {
+  0% { transform:scale(1) }
+  50% { transform:scale(1.15) }
+  100% { transform:scale(1) }
+}
+
+/* ถ้าต้องการให้สถานะอื่นยังเป็นตัวหนังสือสีขาวคมชัด */
+.status-badge.status-in-progress,
+.status-badge.status-completed { color:#fff; }
+
     </style>
 </head>
     <div class="dashboard-layout">
@@ -583,44 +643,80 @@
                 });
         }
 
-        function loadRepairs() {
-    const repairList = document.getElementById('repair-list');
+       function loadRepairs() {
+  const repairList = document.getElementById('repair-list');
+  repairList.innerHTML = '<p>กำลังโหลด...</p>';
 
-    fetch('/api/maintenance-requests') // <-- แก้ไข URL ให้ถูกต้อง
-        .then(response => response.json())
-        .then(repairs => { // <-- เปลี่ยนชื่อตัวแปรให้สื่อความหมาย
-            repairList.innerHTML = ''; // Clear existing list
-            if (repairs.length > 0) {
-                repairs.forEach(repair => {
-                    const repairItem = document.createElement('div');
-                    repairItem.className = 'repair-item status-box'; // เพิ่ม class เพื่อความสวยงาม
+  const getStatusBadge = (status) => {
+    switch (String(status).toLowerCase()) {
+      case 'pending':
+        return `
+          <span class="status-badge repair-await">
+            <span class="dot"></span> รอรับเรื่อง
+          </span>`;
+      case 'in-progress':
+        return `
+          <span class="status-badge status-in-progress">
+            <i class="fa-solid fa-screwdriver-wrench"></i> กำลังดำเนินการ
+          </span>`;
+      case 'completed':
+        return `
+          <span class="status-badge status-completed">
+            <i class="fa-solid fa-circle-check"></i> ซ่อมสำเร็จ
+          </span>`;
+      default:
+        return `<span class="status-badge">${status || 'ไม่ทราบสถานะ'}</span>`;
+    }
+  };
 
-                    // แปลงสถานะเป็นภาษาไทย
-                    let statusText = 'กำลังดำเนินการ';
-                    if (repair.status === 'completed') statusText = 'ซ่อมสำเร็จ';
-                    if (repair.status === 'pending') statusText = 'รอรับเรื่อง';
+  fetch('/api/maintenance-requests')
+    .then((response) => {
+      if (!response.ok) throw new Error('Network response was not ok');
+      return response.json();
+    })
+    .then((repairs) => {
+      repairList.innerHTML = '';
 
-                    repairItem.innerHTML = `
-                        <div class="repair-header">
-                            <strong>ประเภท: ${repair.issue_type}</strong>
-                            <span class="status-${repair.status}">${statusText}</span>
-                        </div>
-                        <p class="repair-details"><strong>รายละเอียด:</strong> ${repair.details}</p>
-                        <div class="repair-footer">
-                            <span><strong>วันที่แจ้ง:</strong> ${new Date(repair.created_at).toLocaleDateString('th-TH')}</span>
-                        </div>
-                    `;
-                    repairList.appendChild(repairItem);
-                });
-            } else {
-                repairList.innerHTML = '<p>ยังไม่มีรายการแจ้งซ่อม</p>';
-            }
-        })
-        .catch(error => {
-            console.error('Error fetching repairs:', error);
-            repairList.innerHTML = '<p>เกิดข้อผิดพลาดในการเชื่อมต่อ ไม่สามารถโหลดข้อมูลได้</p>';
-        });
+      if (!Array.isArray(repairs) || repairs.length === 0) {
+        repairList.innerHTML = '<p>ยังไม่มีรายการแจ้งซ่อม</p>';
+        return;
+      }
+
+      repairs.forEach((repair) => {
+        const repairItem = document.createElement('div');
+        // เพิ่ม repair-card เพื่อปรับเลย์เอาต์เป็นคอลัมน์
+        repairItem.className = 'repair-item status-box repair-card';
+
+        const statusHtml = getStatusBadge(repair.status);
+        const isAwait = String(repair.status).toLowerCase() === 'pending';
+        if (isAwait) repairItem.classList.add('is-await');
+
+        const created = repair.created_at ? new Date(repair.created_at) : null;
+        const dateStr = (created && !isNaN(created)) ? created.toLocaleDateString('th-TH') : '-';
+
+        repairItem.innerHTML = `
+          <div class="repair-header">
+            <strong>ประเภท: ${repair.issue_type ?? '-'}</strong>
+            ${statusHtml}
+          </div>
+          <p class="repair-details">
+            <strong>รายละเอียด:</strong> ${repair.details ?? '-'}
+          </p>
+          <div class="repair-footer">
+            <span><strong>วันที่แจ้ง:</strong> ${dateStr}</span>
+          </div>
+        `;
+
+        repairList.appendChild(repairItem);
+      });
+    })
+    .catch((error) => {
+      console.error('Error fetching repairs:', error);
+      repairList.innerHTML = '<p>เกิดข้อผิดพลาดในการเชื่อมต่อ ไม่สามารถโหลดข้อมูลได้</p>';
+    });
 }
+
+
 
         function fetchContractDetails() {
             fetch('/api/contract-details')

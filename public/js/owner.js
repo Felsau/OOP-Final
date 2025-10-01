@@ -20,13 +20,16 @@ function getRoomStatusBadge(status) {
   return `<span class="status-badge status-default">${safeText(status)}</span>`;
 }
 
-function getRepairStatusBadge(status) {
+function getRepairStatusBadge(status){
   const st = (status || "").toLowerCase().trim().replace("-", "");
-  if (st === "pending")     return '<span class="status-badge repair-pending">รอดำเนินการ</span>';
+  if (st === "pending" || st === "new" || st === "received") {
+    return '<span class="status-badge repair-await"><span class="dot"></span>รอรับเรื่อง</span>';
+  }
   if (st === "inprogress")  return '<span class="status-badge repair-in-progress">กำลังดำเนินการ</span>';
-  if (st === "done")        return '<span class="status-badge repair-done">ซ่อมเสร็จแล้ว</span>';
+  if (st === "done" || st === "completed") return '<span class="status-badge repair-done">ซ่อมเสร็จแล้ว</span>';
   return `<span class="status-badge status-default">${safeText(status)}</span>`;
 }
+
 function applyRepairFilters() {
   const statusSel = document.getElementById("repair-status-filter");
   const qInput = document.getElementById("repair-search");
