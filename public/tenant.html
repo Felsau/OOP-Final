@@ -1,0 +1,960 @@
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tenant Dashboard</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;500;700&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;700&display=swap');
+            :root { --primary-color: #3498db; --primary-hover: #2980b9; --sidebar-bg: #2c3e50; --sidebar-text: #ecf0f1; --sidebar-text-hover: #ffffff; --sidebar-active-bg: #34495e; --sidebar-border: #34495e; --main-bg: #f4f6f9; --card-bg: #ffffff; --text-dark: #333333; --text-light: #6c757d; --border-color: #e0e0e0; --shadow: 0 2px 5px rgba(0, 0, 0, 0.07); --danger-color: #e74c3c; --success-color: #2ecc71; --info-color: #f39c12; --maintenance-color: #3498db; }
+            * { margin: 0; padding: 0; box-sizing: border-box; }
+            body { font-family: 'Sarabun', sans-serif; background-color: var(--main-bg); color: var(--text-dark); line-height: 1.6; }
+            .dashboard-layout { display: flex; min-height: 100vh; }
+            .main-content { flex-grow: 1; padding: 1.5rem 2rem; overflow-y: auto; }
+            .sidebar { width: 260px; background-color: var(--sidebar-bg); color: var(--sidebar-text); display: flex; flex-direction: column; transition: width 0.3s ease; }
+            .sidebar-header { padding: 1.5rem; border-bottom: 1px solid var(--sidebar-border); }
+            .logo { font-size: 1.5rem; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 0.75rem; text-decoration: none; }
+            .sidebar-menu { list-style: none; flex-grow: 1; margin-top: 1rem; }
+            .sidebar-menu a { position: relative; display: flex; align-items: center; gap: 1rem; padding: 1rem 1.5rem; color: var(--sidebar-text); text-decoration: none; transition: background-color 0.2s, color 0.2s; border-left: 4px solid transparent; }
+            .sidebar-menu a:hover { background-color: var(--sidebar-active-bg); color: var(--sidebar-text-hover); }
+            .sidebar-menu a.active { background-color: var(--sidebar-active-bg); color: var(--sidebar-text-hover); border-left-color: var(--primary-color); padding-left: calc(1.5rem - 4px); }
+            .sidebar-menu a i { font-size: 1.1rem; width: 25px; text-align: center; }
+            .sidebar-footer { padding: 1.5rem; border-top: 1px solid var(--sidebar-border); }
+            .logout-button { display: flex; align-items: center; gap: 1rem; text-decoration: none; color: var(--sidebar-text); transition: color 0.2s; }
+            .notification-badge { position: absolute; top: 12px; left: 40px; background-color: var(--danger-color); color: white; font-size: 0.7rem; font-weight: bold; width: 18px; height: 18px; border-radius: 50%; display: flex; justify-content: center; align-items: center; border: 2px solid var(--sidebar-bg); }
+            .main-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
+            .main-header h1 { font-size: 2rem; font-weight: 700; }
+            .user-info { font-weight: 500; color: var(--text-light); }
+            .content-panel { display: none; animation: fadeIn 0.5s ease-in-out; }
+            .content-panel.active { display: block; }
+            @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+            .card, .panel-card { background-color: var(--card-bg); padding: 1.5rem; border-radius: 8px; box-shadow: var(--shadow); margin-bottom: 1.5rem; }
+            .overview-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; }
+            .card-header { display: flex; align-items: center; gap: 1rem; }
+            .card-icon { background-color: var(--primary-color); color: #fff; width: 48px; height: 48px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 1.5rem; flex-shrink: 0; }
+            .card-content h3 { font-size: 0.9rem; color: var(--text-light); font-weight: 500; margin: 0 0 0.25rem 0; text-transform: uppercase; }
+            .card-content p { font-size: 1.8rem; font-weight: 700; margin: 0; }
+            .panel-card h2, .panel-card h3 { font-size: 1.3rem; font-weight: 700; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.75rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem; }
+            .reminders-list, .repair-list, .rules-list { list-style: none; display: flex; flex-direction: column; gap: 1rem; padding: 0; }
+            .reminders-list li { display: flex; align-items: center; gap: 1rem; padding: 1rem; background-color: #fcfcfc; border-radius: 6px; border-left: 4px solid; }
+            .reminders-list .rent-due { border-color: var(--danger-color); }
+            .reminders-list .maintenance { border-color: var(--maintenance-color); }
+            .reminders-list .info { border-color: var(--info-color); }
+            .reminders-list i { font-size: 1.2rem; }
+            .reminders-list .rent-due i { color: var(--danger-color); }
+            .reminders-list .maintenance i { color: var(--maintenance-color); }
+            .reminders-list .info i { color: var(--info-color); }
+            .rules-list li { display: flex; align-items: center; gap: 1rem; padding: 0.8rem 0; border-bottom: 1px solid var(--border-color); }
+            .rules-list li:last-child { border-bottom: none; }
+            .rules-list i { font-size: 1.2rem; color: var(--primary-color); width: 25px; text-align: center; }
+            .repair-item { display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.25rem; border: 1px solid var(--border-color); border-radius: 8px; background-color: #fff; }
+            .repair-details h4 { font-size: 1.1rem; font-weight: 600; margin: 0 0 0.25rem 0; }
+            .repair-description { font-size: 0.9rem; color: var(--text-light); margin: 0; }
+            .repair-status, .status-badge { padding: 0.4rem 0.9rem; border-radius: 20px; font-size: 0.8rem; font-weight: 500; color: #fff; white-space: nowrap; }
+            .status-completed { background-color: var(--success-color); }
+            .status-in-progress { background-color: var(--info-color); }
+            .status-pending { background-color: var(--danger-color); }
+            .form-group { margin-bottom: 1.5rem; }
+            .form-group label { display: block; font-weight: 500; margin-bottom: 0.5rem; color: var(--text-dark); }
+            .form-group input[type="file"], .form-group input[type="text"], .form-group input[type="date"], .form-group textarea, .form-group select { display: block; width: 100%; padding: 0.75rem 1rem; border: 1px solid var(--border-color); border-radius: 6px; background-color: #fff; font-family: 'Sarabun', sans-serif; font-size: 1rem; transition: border-color 0.2s, box-shadow 0.2s; }
+            .form-group input:focus, .form-group textarea:focus, .form-group select:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2); }
+            .form-group select { -webkit-appearance: none; -moz-appearance: none; appearance: none; background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%236c757d%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E'); background-repeat: no-repeat; background-position: right 1rem center; background-size: 0.65em auto; padding-right: 2.5rem; }
+            .form-group textarea { resize: vertical; min-height: 120px; }
+            .submit-btn, .download-button { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; background-color: var(--primary-color); color: #fff; padding: 0.75rem 1.5rem; border: none; border-radius: 6px; font-size: 1rem; font-weight: 500; text-decoration: none; cursor: pointer; transition: background-color 0.2s; }
+            .submit-btn:hover, .download-button:hover { background-color: var(--primary-hover); }
+            .submit-btn:disabled { background-color: var(--text-light); cursor: not-allowed; }
+            .download-button i { margin-right: 8px; }
+            .payment-breakdown { list-style: none; padding: 0; margin: 1.5rem 0; }
+            .payment-breakdown li { display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 0; border-bottom: 1px solid var(--border-color); }
+            .payment-breakdown li:last-child { border-bottom: none; }
+            .payment-breakdown .item-desc { color: var(--text-light); }
+            .payment-breakdown .item-price { font-weight: 500; }
+            .payment-total { font-size: 1.4rem; font-weight: 700; display: flex; justify-content: space-between; margin-top: 1rem; }
+            .qr-code-container { text-align: center; margin: 2rem 0; border-top: 1px solid var(--border-color); padding-top: 2rem; }
+            .qr-code-container p { margin-bottom: 1rem; font-weight: 500; }
+            .qr-code-img { width: 200px; height: 200px; border: 1px solid var(--border-color); border-radius: 8px; padding: 8px; background: #fff; }
+            .qr-code-container .total-amount { font-size: 1.5rem; font-weight: 700; margin-top: 1rem; }
+            #slip-upload-section { margin-top: 2.5rem; border-top: 2px solid var(--border-color); padding-top: 2rem; }
+            #upload-status { margin-top: 1rem; font-weight: 500; padding: 0.8rem; border-radius: 8px; display: none; }
+            #upload-status.success { background-color: #d1fae5; color: #065f46; display: block; }
+            #upload-status.error { background-color: #fee2e2; color: #991b1b; display: block; }
+            .contract-header h2 { font-size: 1.2rem; display: flex; align-items: center; }
+            .contract-info-wrapper { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; padding-bottom: 1.5rem; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-color); }
+            .contract-info-item .label { font-size: 0.9rem; color: var(--text-light); margin-bottom: 4px; }
+            .contract-info-item .value { font-size: 1rem; font-weight: 500; }
+            .contact-channels { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; margin-top: 1.5rem; }
+            .channel-item { display: flex; align-items: center; gap: 1rem; padding: 1.25rem; background-color: #fff; border-radius: 8px; border: 1px solid var(--border-color); }
+            .channel-item i { font-size: 1.4rem; color: var(--text-light); width: 30px; text-align: center; }
+            .profile-grid { display: grid; grid-template-columns: 1fr; gap: 1.5rem; }
+            @media (min-width: 768px) { .profile-grid { grid-template-columns: 1fr 1fr; } }
+            .info-group label { display: block; font-weight: 500; margin-bottom: 0.5rem; color: var(--text-light); }
+            .info-group .value-display { width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 8px; background-color: #f8f9fa; color: var(--text-dark); font-size: 1rem; }
+            .profile-actions { text-align: right; margin-top: 2rem; }
+    </style>
+</head>
+    <div class="dashboard-layout">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <a href="#" class="logo">
+                    <i class="fa-solid fa-house-user"></i>
+                    <span>บ้านพักกัน</span>
+                </a>
+            </div>
+            <ul class="sidebar-menu">
+                <li><a href="#" class="active" data-target="overview-panel"><i class="fa-solid fa-table-columns"></i> <span>ภาพรวม</span></a></li>
+                <li><a href="#" data-target="payments-panel"><i class="fa-solid fa-file-invoice-dollar"></i> <span>การชำระเงิน</span></a></li>
+                <li><a href="#" data-target="announcements-panel"><i class="fa-solid fa-bullhorn"></i> <span>ประกาศ</span><span class="notification-badge">1</span></a></li>
+                <li><a href="#" data-target="repairs-panel"><i class="fa-solid fa-screwdriver-wrench"></i> <span>แจ้งซ่อม</span></a></li>
+                <li><a href="#" data-target="contract-panel"><i class="fa-solid fa-file-signature"></i> <span>สัญญาเช่า</span></a></li>
+                <li><a href="#" data-target="rules-panel"><i class="fa-solid fa-scroll"></i> <span>กฎระเบียบ</span></a></li>
+                <li><a href="#" data-target="contact-panel"><i class="fa-solid fa-address-book"></i> <span>ติดต่อเจ้าของ</span></a></li>
+                <li><a href="#" data-target="moveout-panel"><i class="fa-solid fa-right-from-bracket"></i> <span>แจ้งย้ายออก</span></a></li>
+                <li><a href="#" data-target="profile-panel"><i class="fa-solid fa-user-circle"></i> <span>ข้อมูลส่วนตัว</span></a></li>
+            </ul>
+            <div class="sidebar-footer">
+                <a href="/logout" class="logout-button">
+                    <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                    <span>ออกจากระบบ</span>
+                </a>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <header class="main-header">
+                <h1 id="main-title">ภาพรวม</h1>
+                <div class="user-info" id="welcome-message">กำลังโหลด...</div>
+            </header>
+
+            <section id="overview-panel" class="content-panel active">
+                <div class="overview-cards">
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-icon"><i class="fa-solid fa-wallet"></i></div>
+                            <div class="card-content">
+                                <h3>ยอดชำระเดือนนี้</h3>
+                                <p id="overview-amount">-,--- บาท</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-icon"><i class="fa-solid fa-calendar-check"></i></div>
+                            <div class="card-content">
+                                <h3>กำหนดชำระ</h3>
+                                <p id="overview-due-date">--/--/----</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-icon"><i class="fa-solid fa-wrench"></i></div>
+                            <div class="card-content">
+                                <h3>รายการแจ้งซ่อม</h3>
+                                <p id="overview-maintenance-count">- รายการ</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel-card">
+                    <h2><i class="fa-solid fa-bell"></i>การแจ้งเตือนและนัดหมายเร็วๆ นี้</h2>
+                    <ul class="reminders-list" id="reminders-list">
+                        <li class="info">
+                            <i class="fa-solid fa-spinner fa-spin"></i>
+                            <div>
+                                <span class="description">กำลังโหลดข้อมูล...</span>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </section>
+
+            <section id="payments-panel" class="content-panel">
+                <div class="panel-card">
+                    <h2><i class="fa-solid fa-receipt"></i> ชำระเงินรอบปัจจุบัน</h2>
+                    <ul class="payment-breakdown">
+                        <li>
+                            <span class="item-desc">ค่าเช่าห้อง</span>
+                            <span class="item-price" id="rent-amount">-,--- บาท</span>
+                        </li>
+                        <li>
+                            <span class="item-desc">ค่าน้ำ</span>
+                            <span class="item-price" id="water-amount">-,--- บาท</span>
+                        </li>
+                        <li>
+                            <span class="item-desc">ค่าไฟ</span>
+                            <span class="item-price" id="electricity-amount">-,--- บาท</span>
+                        </li>
+                    </ul>
+
+                    <div class="payment-total">
+                        <span>ยอดรวม</span>
+                        <span id="total-amount">-,--- บาท</span>
+                    </div>
+
+                    <div class="qr-code-container">
+                        <p>สแกน QR Code นี้เพื่อชำระเงิน</p>
+                        <img id="qr-code-img" src="#" alt="QR Code for Payment" class="qr-code-img" style="visibility: hidden;">
+                        <div class="total-amount" id="qr-total-amount"></div>
+                    </div>
+
+                    <div class="bank-details">
+                        <h4>หรือโอนผ่านบัญชีธนาคาร:</h4>
+                        <table class="bank-details-table">
+                            <tbody>
+                                <tr>
+                                    <td>ธนาคาร:</td>
+                                    <td>กสิกรไทย</td>
+                                </tr>
+                                <tr>
+                                    <td>ชื่อบัญชี:</td>
+                                    <td>นายสมชาย รักดี</td>
+                                </tr>
+                                <tr>
+                                    <td>เลขที่บัญชี:</td>
+                                    <td>123-4-56789-0</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div id="slip-upload-section">
+    <h3><i class="fa-solid fa-cloud-arrow-up"></i> อัปโหลดสลิปชำระเงิน</h3>
+    <form id="slip-upload-form">
+        <div class="form-group">
+            <label for="paymentSlip">เลือกไฟล์สลิป (รูปภาพหรือ PDF)</label>
+            <input type="file" id="paymentSlip" name="paymentSlip" accept="image/*,.pdf" required>
+            <input type="hidden" id="paymentId" name="paymentId">
+        </div>
+        <button type="submit" class="submit-btn" id="upload-slip-btn">อัปโหลดสลิป</button>
+    </form>
+    <div id="upload-status"></div>
+</div>
+                </div>
+            </section>
+
+            <section id="announcements-panel" class="content-panel">
+                <div class="panel-card">
+                    <h2><i class="fa-solid fa-bullhorn"></i> ประกาศและข่าวสาร</h2>
+                    <ul id="announcements-list" class="reminders-list">
+                        <li class="info">
+                            <i class="fa-solid fa-spinner fa-spin"></i>
+                            <div><span class="description">กำลังโหลดข้อมูล...</span></div>
+                        </li>
+                    </ul>
+                </div>
+            </section>
+
+            <section id="repairs-panel" class="content-panel">
+                <div class="panel-card">
+                    <h3><i class="fa-solid fa-circle-plus"></i> แจ้งเรื่องซ่อมใหม่</h3>
+                    <form id="new-repair-form" class="repair-form">
+                        <div class="form-group">
+                            <label for="problem-type">ประเภทปัญหา</label>
+                            <select id="problem-type" name="problem-type" required>
+                                <option value="" disabled selected>-- เลือก --</option>
+                                <option value="ปัญหาน้ำประปา">ปัญหาน้ำประปา</option>
+                                <option value="ปัญหาไฟฟ้า">ปัญหาไฟฟ้า</option>
+                                <option value="ปัญหาอินเทอร์เน็ต">ปัญหาอินเทอร์เน็ต</option>
+                                <option value="ปัญหาเครื่องปรับอากาศ">ปัญหาเครื่องปรับอากาศ</option>
+                                <option value="อื่นๆ">อื่นๆ</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="problem-details">รายละเอียด</label>
+                            <textarea id="problem-details" name="problem-details" rows="5" placeholder="กรุณาอธิบายปัญหาโดยละเอียด..." required></textarea>
+                        </div>
+                        <button type="submit" class="submit-btn">ส่งเรื่อง</button>
+                    </form>
+                </div>
+
+                <div class="panel-card">
+                    <h3><i class="fa-solid fa-list-check"></i> ติดตามสถานะการแจ้งซ่อม</h3>
+                    <div id="repair-list" class="repair-list"></div>
+                </div>
+            </section>
+
+            <section id="contract-panel" class="content-panel">
+                <div class="panel-card contract-card">
+                    <div class="contract-header">
+                        <h2><i class="fa-solid fa-file-signature"></i> สัญญาเช่าของคุณ</h2>
+                    </div>
+                    <div class="contract-info-wrapper">
+                        <div class="contract-info-item">
+                            <span class="label">ผู้เช่า:</span>
+                            <span class="value" id="contract-tenant-name">กำลังโหลด...</span>
+                        </div>
+                        <div class="contract-info-item">
+                            <span class="label">ห้อง:</span>
+                            <span class="value" id="contract-room-number">...</span>
+                        </div>
+                        <div class="contract-info-item">
+                            <span class="label">วันเริ่มสัญญา:</span>
+                            <span class="value" id="contract-start-date">...</span>
+                        </div>
+                        <div class="contract-info-item">
+                            <span class="label">วันสิ้นสุดสัญญา:</span>
+                            <span class="value" id="contract-end-date">...</span>
+                        </div>
+                        <div class="contract-info-item">
+                            <span class="label">อัตราค่าเช่า:</span>
+                            <span class="value" id="contract-rent-rate">...</span>
+                        </div>
+                    </div>
+                    <div class="contract-actions">
+                        <a href="#" id="download-contract-link" class="download-button" style="display: none;">
+                            <i class="fa-solid fa-download"></i>
+                            <span>ดาวน์โหลดสัญญา (PDF)</span>
+                        </a>
+                    </div>
+                </div>
+            </section>
+
+            <section id="rules-panel" class="content-panel">
+                <div class="panel-card">
+                    <h2><i class="fa-solid fa-scroll"></i> กฎระเบียบและข้อบังคับของหอพัก</h2>
+                    <ul class="rules-list">
+                        <li><i class="fa-solid fa-broom"></i><span>โปรดรักษาความสะอาดบริเวณข้างห้องพักและพื้นที่ส่วนกลาง</span></li>
+                        <li><i class="fa-solid fa-volume-xmark"></i><span>งดส่งเสียงดังรบกวนผู้อื่นหลังเวลา 22:00 น.</span></li>
+                        <li><i class="fa-solid fa-smoking-ban"></i><span>ห้ามสูบบุหรี่ภายในตัวอาคารโดยเด็ดขาด</span></li>
+                        <li><i class="fa-solid fa-user-slash"></i><span>ห้ามนำบุคคลภายนอกที่ไม่ได้รับอนุญาตเข้าพักค้างคืน</span></li>
+                        <li><i class="fa-solid fa-paw"></i><span>ไม่อนุญาตให้เลี้ยงสัตว์เลี้ยงทุกชนิด</span></li>
+                        <li><i class="fa-solid fa-fire-burner"></i><span>ห้ามประกอบอาหารที่ทำให้เกิดควันรบกวน และห้ามใช้แก๊สในการปรุงอาหารในห้องพัก</span></li>
+                        <li><i class="fa-solid fa-trash-can"></i><span>โปรดทิ้งขยะในบริเวณที่จัดเตรียมไว้ให้ และคัดแยกขยะตามที่กำหนด</span></li>
+                        <li><i class="fa-solid fa-lock"></i><span>โปรดล็อคห้องทุกครั้งเมื่อไม่อยู่ เพื่อความปลอดภัยในทรัพย์สินของท่าน</span></li>
+                    </ul>
+                </div>
+            </section>
+
+            <section id="contact-panel" class="content-panel">
+                <div class="panel-card">
+                    <h2><i class="fa-solid fa-phone"></i> ช่องทางการติดต่อเจ้าของบ้าน</h2>
+                    <div class="contact-channels">
+                        <div class="channel-item">
+                            <i class="fa-solid fa-user"></i>
+                            <span>คุณสมชาย รักดี (เจ้าของบ้าน)</span>
+                        </div>
+                        <div class="channel-item">
+                            <i class="fa-solid fa-phone"></i>
+                            <span>088-888-8888</span>
+                        </div>
+                        <div class="channel-item">
+                            <i class="fa-brands fa-line"></i>
+                            <span>@somchai.home</span>
+                        </div>
+                        <div class="channel-item">
+                            <i class="fa-solid fa-envelope"></i>
+                            <span>owner@email.com</span>
+                        </div>
+                    </div>
+
+                    <h2 style="margin-top: 2.5rem; border-top: 1px solid var(--border-color); padding-top: 2rem;"><i class="fa-solid fa-paper-plane"></i> ส่งข้อความด่วน</h2>
+
+                    <form id="quick-message-form">
+                        <div class="form-group">
+                            <textarea id="quick-message-text" name="message" rows="6" placeholder="พิมพ์ข้อความด่วนของคุณที่นี่... ระบบจะส่งข้อความไปยังเจ้าของบ้าน"></textarea>
+                        </div>
+                        <button type="submit" class="submit-btn">ส่งข้อความ</button>
+                    </form>
+                    <div id="form-feedback" style="margin-top: 1rem; font-weight: bold;"></div>
+                </div>
+            </section>
+
+            <section id="moveout-panel" class="content-panel">
+                <div class="panel-card">
+                    <h2><i class="fa-solid fa-person-walking-arrow-right"></i> แบบฟอร์มแจ้งย้ายออก</h2>
+                    <p>กรุณากรอกแบบฟอร์มด้านล่างเพื่อแจ้งความประสงค์จะย้ายออกล่วงหน้าอย่างน้อย 30 วันตามที่ระบุในสัญญา</p>
+                    <form id="moveout-form">
+                        <div class="form-group">
+                            <label for="moveout-date">วันที่คาดว่าจะย้ายออก</label>
+                            <input type="date" id="moveout-date" name="moveout-date" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="moveout-reason">เหตุผลการย้ายออก</label>
+                            <textarea id="moveout-reason" name="moveout-reason" rows="4" placeholder="เช่น สิ้นสุดสัญญาเช่า, ย้ายที่ทำงาน, ฯลฯ" required></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="forwarding-address">ที่อยู่สำหรับจัดส่งเอกสาร (ถ้ามี)</label>
+                            <input type="text" id="forwarding-address" name="forwarding-address" placeholder="บ้านเลขที่, ถนน, ตำบล/แขวง, อำเภอ/เขต, จังหวัด, รหัสไปรษณีย์">
+                        </div>
+                        <button type="submit" class="submit-btn">
+                            <i class="fa-solid fa-paper-plane"></i>
+                            <span>ยืนยันการแจ้งย้ายออก</span>
+                        </button>
+                    </form>
+                </div>
+            </section>
+
+            <section id="profile-panel" class="content-panel">
+                <div class="panel-card">
+                    <h2><i class="fa-solid fa-address-card"></i> ข้อมูลส่วนตัว</h2>
+                    <div class="profile-grid" style="margin-top: 1.5rem;">
+                        <div class="info-group">
+                            <label>ชื่อ-สกุล</label>
+                            <div id="profile-name" class="value-display">กำลังโหลด...</div>
+                        </div>
+                        <div class="info-group">
+                            <label>เลขห้อง/บ้านเลขที่</label>
+                            <div id="profile-room" class="value-display">กำลังโหลด...</div>
+                        </div>
+                        <div class="info-group">
+                            <label>เบอร์โทรศัพท์</label>
+                            <div id="profile-phone" class="value-display">กำลังโหลด...</div>
+                        </div>
+                        <div class="info-group">
+                            <label>อีเมล</label>
+                            <div id="profile-email" class="value-display">กำลังโหลด...</div>
+                        </div>
+                    </div>
+
+                    <h3 style="margin-top: 2rem; padding-top: 2rem; border-top: 1px solid var(--border-color);">
+                        <i class="fa-solid fa-user-shield"></i> ข้อมูลผู้ติดต่อฉุกเฉิน
+                    </h3>
+                    <div class="profile-grid" style="margin-top: 1.5rem;">
+                        <div class="info-group">
+                            <label>ชื่อ-สกุล ผู้ติดต่อฉุกเฉิน</label>
+                            <div id="emergency-name" class="value-display">กำลังโหลด...</div>
+                        </div>
+                        <div class="info-group">
+                            <label>เบอร์โทรศัพท์ติดต่อฉุกเฉิน</label>
+                            <div id="emergency-phone" class="value-display">กำลังโหลด...</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        let currentPaymentId = null;
+
+        function fetchDashboardData() {
+    fetch('/api/tenant/dashboard')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Not authenticated');
+            }
+            return response.json();
+        })
+        .then(data => {
+            // Welcome message
+            document.getElementById('welcome-message').textContent =
+                data.userInfo?.name ? `สวัสดี, ${data.userInfo.name}` : 'ยินดีต้อนรับ';
+
+            // Payment section
+            const p = data.payment || null;
+
+            // keep global currentPaymentId (avoid shadowing)
+            currentPaymentId = p?.id ?? null;
+            const paymentIdInput = document.getElementById('paymentId');
+            if (paymentIdInput) paymentIdInput.value = currentPaymentId ?? '';
+
+            // amount
+            const amountEl = document.getElementById('overview-amount');
+            if (p && p.id != null && typeof p.amount === 'number') {
+                amountEl.textContent = `${Number(p.amount).toLocaleString('th-TH')} บาท`;
+            } else {
+                amountEl.textContent = '–';
+            }
+
+            // due date
+            const dueEl = document.getElementById('overview-due-date');
+            const dueRaw = p?.due_date;
+            if (dueRaw) {
+                const d = new Date(dueRaw);
+                if (!isNaN(d.getTime())) {
+                    dueEl.textContent = d.toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' });
+                } else {
+                    dueEl.textContent = '–';
+                }
+            } else {
+                dueEl.textContent = '–';
+            }
+
+            // slip upload visible only if we have a real bill id
+            const slipSec = document.getElementById('slip-upload-section');
+            if (slipSec) slipSec.style.display = (p && p.id != null) ? 'block' : 'none';
+
+            // Maintenance count
+// Maintenance count
+            const pendingCount = data.maintenance?.pending_count || 0;
+            const inProgressCount = data.maintenance?.in_progress_count || 0;
+            const totalOpenMaintenance = pendingCount + inProgressCount;
+            document.getElementById('overview-maintenance-count').textContent =
+                `${totalOpenMaintenance} รายการ`;
+
+            // Reminders
+            const remindersList = document.getElementById('reminders-list');
+            remindersList.innerHTML = '';
+
+            if (data.payment && data.payment.status !== 'paid') {
+                remindersList.innerHTML += `
+                    <li class="rent-due">
+                        <i class="fa-solid fa-file-invoice-dollar"></i>
+                        <div><span class="description">กำหนดชำระค่าเช่าวันที่ ${document.getElementById('overview-due-date').textContent}</span></div>
+                    </li>`;
+            }
+
+            if (totalOpenMaintenance > 0) {
+                remindersList.innerHTML += `
+                    <li class="maintenance">
+                        <i class="fa-solid fa-screwdriver-wrench"></i>
+                        <div><span class="description">มีรายการแจ้งซ่อมค้างอยู่ ${totalOpenMaintenance} รายการ</span></div>
+                    </li>`;
+            }
+
+            if (data.announcement) {
+                remindersList.innerHTML += `
+                    <li class="info">
+                        <i class="fa-solid fa-bullhorn"></i>
+                        <div><span class="description">ประกาศล่าสุด: ${data.announcement.title}</span></div>
+                    </li>`;
+            }
+
+            if (remindersList.children.length === 0) {
+                remindersList.innerHTML = `
+                    <li class="info">
+                        <i class="fa-solid fa-circle-check"></i>
+                        <div><span class="description">ไม่มีรายการแจ้งเตือนในขณะนี้</span></div>
+                    </li>`;
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching dashboard data:', error);
+
+            // Fallback static data
+            document.getElementById('welcome-message').textContent = 'สวัสดี, สมศรี ใจดี';
+            document.getElementById('overview-amount').textContent = '5,500 บาท';
+            document.getElementById('overview-due-date').textContent = '5 ต.ค. 2568';
+            document.getElementById('overview-maintenance-count').textContent = '1 รายการ';
+            document.getElementById('reminders-list').innerHTML = `
+                <li class="rent-due">
+                    <i class="fa-solid fa-file-invoice-dollar"></i>
+                    <div><span class="description">กำหนดชำระค่าเช่าวันที่ 5 ต.ค. 2568</span></div>
+                </li>
+                <li class="maintenance">
+                    <i class="fa-solid fa-screwdriver-wrench"></i>
+                    <div><span class="description">รายการแจ้งซ่อม "แอร์ไม่เย็น" กำลังดำเนินการ</span></div>
+                </li>`;
+        });
+}
+
+        function updateContent(elementId, value) {
+            const element = document.querySelector(`#${elementId}`);
+            if (element) {
+                element.textContent = value || 'ไม่มีข้อมูล';
+            }
+        }
+
+        function fetchAnnouncements() {
+            fetch('/api/announcements')
+                .then(res => res.json())
+                .then(data => {
+                    const list = document.getElementById('announcements-list');
+                    list.innerHTML = '';
+                    if (data.length === 0) {
+                        list.innerHTML = `<li class="info"><i class="fa-solid fa-circle-check"></i><div><span class="description">ยังไม่มีประกาศ</span></div></li>`;
+                    } else {
+                        data.forEach(item => {
+                            const date = new Date(item.created_at);
+                            list.innerHTML += `
+                                <li class="info">
+                                    <i class="fa-solid fa-bullhorn"></i>
+                                    <div>
+                                        <strong>${item.title}</strong><br>
+                                        <span class="description">${item.content}</span><br>
+                                        <small>${date.toLocaleDateString('th-TH')}</small>
+                                    </div>
+                                </li>`;
+                        });
+                    }
+                })
+                .catch(err => {
+                    console.error('Error fetching announcements:', err);
+                    const list = document.getElementById('announcements-list');
+                    list.innerHTML = `<li class="info"><i class="fa-solid fa-bullhorn"></i><div><strong>แจ้งตัดไฟวันที่ 10 ต.ค.</strong><br><span class="description">เนื่องจากมีการบำรุงรักษาระบบไฟฟ้า จะมีการตัดไฟในวันที่ 10 ต.ค. เวลา 9:00 - 12:00 น.</span><br><small>${new Date().toLocaleDateString('th-TH')}</small></div></li>`;
+                });
+        }
+
+        function loadRepairs() {
+    const repairList = document.getElementById('repair-list');
+
+    fetch('/api/maintenance-requests') // <-- แก้ไข URL ให้ถูกต้อง
+        .then(response => response.json())
+        .then(repairs => { // <-- เปลี่ยนชื่อตัวแปรให้สื่อความหมาย
+            repairList.innerHTML = ''; // Clear existing list
+            if (repairs.length > 0) {
+                repairs.forEach(repair => {
+                    const repairItem = document.createElement('div');
+                    repairItem.className = 'repair-item status-box'; // เพิ่ม class เพื่อความสวยงาม
+
+                    // แปลงสถานะเป็นภาษาไทย
+                    let statusText = 'กำลังดำเนินการ';
+                    if (repair.status === 'completed') statusText = 'ซ่อมสำเร็จ';
+                    if (repair.status === 'pending') statusText = 'รอรับเรื่อง';
+
+                    repairItem.innerHTML = `
+                        <div class="repair-header">
+                            <strong>ประเภท: ${repair.issue_type}</strong>
+                            <span class="status-${repair.status}">${statusText}</span>
+                        </div>
+                        <p class="repair-details"><strong>รายละเอียด:</strong> ${repair.details}</p>
+                        <div class="repair-footer">
+                            <span><strong>วันที่แจ้ง:</strong> ${new Date(repair.created_at).toLocaleDateString('th-TH')}</span>
+                        </div>
+                    `;
+                    repairList.appendChild(repairItem);
+                });
+            } else {
+                repairList.innerHTML = '<p>ยังไม่มีรายการแจ้งซ่อม</p>';
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching repairs:', error);
+            repairList.innerHTML = '<p>เกิดข้อผิดพลาดในการเชื่อมต่อ ไม่สามารถโหลดข้อมูลได้</p>';
+        });
+}
+
+        function fetchContractDetails() {
+            fetch('/api/contract-details')
+    .then(response => response.ok ? response.json() : Promise.reject())
+    .then(data => {
+      const formatDate = (d) => new Date(d).toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' });
+      document.getElementById('contract-tenant-name').textContent = data.tenant_name || 'N/A';
+      document.getElementById('contract-room-number').textContent = data.room_number || 'N/A';
+      document.getElementById('contract-start-date').textContent = formatDate(data.start_date);
+      document.getElementById('contract-end-date').textContent = formatDate(data.end_date);
+      document.getElementById('contract-rent-rate').textContent = `${(data.rent_rate || 0).toLocaleString()} บาท/เดือน`;
+
+      const downloadLink = document.getElementById('download-contract-link');
+      if (data.contract_url) {
+        downloadLink.href = data.contract_url;
+        downloadLink.style.display = 'inline-flex';
+      } else {
+        downloadLink.style.display = 'none';
+      }
+    })
+    .catch(() => {
+      // แสดงข้อความผิดพลาดแทนการใส่ข้อมูลจำลอง
+      const box = document.getElementById('contract-section');
+      if (box) {
+        box.querySelector('.contract-info-wrapper')?.classList.add('error');
+      }
+      document.getElementById('contract-tenant-name').textContent = '—';
+      document.getElementById('contract-room-number').textContent = '—';
+      document.getElementById('contract-start-date').textContent = '—';
+      document.getElementById('contract-end-date').textContent = '—';
+      document.getElementById('contract-rent-rate').textContent = '—';
+      const downloadLink = document.getElementById('download-contract-link');
+      downloadLink.style.display = 'none';
+    });
+}
+
+        function fetchBillingDetails() {
+
+            fetch('/api/billing-details')
+                .then(response => {
+                    if (!response.ok) throw new Error('NETWORK');
+                    return response.json();
+                })
+                .then(data => {
+                    const formatNumber = (num) => Number(num || 0).toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                    const formatInteger = (num) => Number(num || 0).toLocaleString('th-TH');
+
+                    const rent = data?.room_rent ?? 0;
+                    const water = data?.water_bill ?? 0;
+                    const elec  = data?.electricity_bill ?? 0;
+                    const total = data?.total_amount ?? 0;
+
+                    const rentEl  = document.getElementById('rent-amount');
+                    const waterEl = document.getElementById('water-amount');
+                    const elecEl  = document.getElementById('electricity-amount');
+                    const totalEl = document.getElementById('total-amount');
+                    const qrImg   = document.getElementById('qr-code-img');
+                    const qrText  = document.getElementById('qr-total-amount');
+
+                    if (rentEl)  rentEl.textContent  = `${formatInteger(rent)} บาท`;
+                    if (waterEl) waterEl.textContent = `${formatInteger(water)} บาท`;
+                    if (elecEl)  elecEl.textContent  = `${formatNumber(elec)} บาท`;
+                    if (totalEl) totalEl.textContent = `${formatNumber(total)} บาท`;
+
+                    const showQR = total > 0 && (data?.status ? String(data.status).toLowerCase() !== 'paid' : true);
+                    if (showQR) {
+                        const promptPayId = (data && data.promptpay_id) ? String(data.promptpay_id) : '0999999999';
+                        const totalAmountForQR = Number(total).toFixed(2);
+                        if (qrImg) {
+                            qrImg.src = `https://promptpay.io/${promptPayId}/${totalAmountForQR}.png`;
+                            qrImg.style.visibility = 'visible';
+                        }
+                        if (qrText) qrText.textContent = `ยอดรวม: ${formatNumber(total)} บาท`;
+                    } else {
+                        if (qrImg) { qrImg.removeAttribute('src'); qrImg.style.visibility = 'hidden'; }
+                        if (qrText) qrText.textContent = 'ไม่มีบิลที่ต้องชำระ';
+                    }
+                })
+                .catch(err => {
+                    console.error('Error fetching billing details:', err);
+                    const qrImg  = document.getElementById('qr-code-img');
+                    const qrText = document.getElementById('qr-total-amount');
+                    if (qrImg) { qrImg.removeAttribute('src'); qrImg.style.visibility = 'hidden'; }
+                    if (qrText) qrText.textContent = 'ไม่พบข้อมูลบิลในขณะนี้';
+                });
+
+}
+
+        function handleNewRepairSubmit() {
+            const form = document.getElementById('new-repair-form');
+            form.addEventListener('submit', async (event) => {
+                event.preventDefault();
+
+                const formData = new FormData(form);
+                const data = Object.fromEntries(formData.entries());
+
+                try {
+                    const response = await fetch('/api/maintenance-requests', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(data),
+                    });
+
+                    const result = await response.json();
+
+                    if (result.success) {
+                        alert('ส่งเรื่องแจ้งซ่อมสำเร็จ!');
+                        form.reset();
+                        loadRepairs(); 
+                    } else {
+                        alert(`เกิดข้อผิดพลาด: ${result.error}`);
+                    }
+                } catch (error) {
+                    console.error('Error submitting repair request:', error);
+                    alert('ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้');
+                }
+            });
+        }
+
+        function handleContactFormSubmit() {
+            const form = document.getElementById('quick-message-form');
+            const feedbackDiv = document.getElementById('form-feedback');
+            const textarea = document.getElementById('quick-message-text');
+            const submitBtn = form ? form.querySelector('button[type="submit"]') : null;
+            if (!form) return;
+
+            form.addEventListener('submit', async function(event) {
+                event.preventDefault();
+                const message = textarea ? textarea.value.trim() : '';
+                if (!message) {
+                    if (feedbackDiv) { feedbackDiv.textContent = 'พิมพ์ข้อความก่อนส่ง'; feedbackDiv.style.color = 'red'; }
+                    return;
+                }
+                try {
+                    if (submitBtn) { submitBtn.disabled = true; submitBtn.dataset._oldText = submitBtn.textContent; submitBtn.textContent = 'กำลังส่ง...'; }
+                    const res = await fetch('/api/contact-message', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ message })
+                    });
+                    const json = await res.json().catch(() => ({}));
+                    if (res.ok && (json.success === true || !json.error)) {
+                        if (feedbackDiv) { feedbackDiv.textContent = json.message || 'ส่งข้อความสำเร็จแล้ว'; feedbackDiv.style.color = 'green'; }
+                        form.reset();
+                    } else {
+                        throw new Error(json.error || 'ส่งไม่สำเร็จ');
+                    }
+                } catch (err) {
+                    if (feedbackDiv) { feedbackDiv.textContent = err.message || 'ส่งไม่สำเร็จ'; feedbackDiv.style.color = 'red'; }
+                } finally {
+                    if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = submitBtn.dataset._oldText || 'ส่งข้อความ'; }
+                }
+            });
+        }
+
+        function updateContent(elementId, value, isHtml = false) {
+            const element = document.getElementById(elementId);
+            if (element) {
+                element.classList.remove('loading');
+                if (isHtml) {
+                    element.innerHTML = value || '<span style="color: #999;">ไม่มีข้อมูล</span>';
+                } else {
+                    element.textContent = value || 'ไม่มีข้อมูล';
+                }
+            }
+        }
+
+        function fetchProfileData() {
+            fetch('/api/tenant/profile')
+                .then(response => {
+                    if (!response.ok) throw new Error('Network response was not ok');
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success) {
+                        const user = data.data;
+                        updateContent('profile-name', user.name);
+                        updateContent('profile-room', user.room_number);
+                        updateContent('profile-phone', user.phone);
+                        updateContent('profile-email', user.email);
+
+                        const emergencyContact = user.emergency_contact_name ?
+                            `${user.emergency_contact_name}` :
+                            null;
+                        updateContent('emergency-name', emergencyContact);
+                        updateContent('emergency-phone', user.emergency_contact_phone);
+                    } else {
+                        throw new Error(data.error || 'Failed to load profile data');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching profile data:', error);
+                    document.querySelectorAll('#profile-panel .value-display').forEach(el => {
+                        el.textContent = 'โหลดข้อมูลล้มเหลว';
+                        el.style.color = 'red';
+                    });
+                });
+        }
+
+        function handleMoveOutSubmit() {
+            const form = document.getElementById('moveout-form');
+            if (!form) return;
+
+            form.addEventListener('submit', function(event) {
+                event.preventDefault();
+
+                const moveoutDate = document.getElementById('moveout-date').value;
+                const moveoutReason = document.getElementById('moveout-reason').value;
+                const forwardingAddress = document.getElementById('forwarding-address').value;
+
+                if (!moveoutDate) {
+                    alert('กรุณาเลือกวันที่คาดว่าจะย้ายออก');
+                    return;
+                }
+
+                const formData = {
+                    'moveout-date': moveoutDate,
+                    'moveout-reason': moveoutReason,
+                    'forwarding-address': forwardingAddress
+                };
+
+                fetch('/api/moveout-request', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(formData)
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            alert('ยืนยันการแจ้งย้ายออกสำเร็จ! เจ้าหน้าที่จะติดต่อกลับเพื่อยืนยันอีกครั้ง');
+                            form.reset();
+                        } else {
+                            alert('เกิดข้อผิดพลาด: ' + data.error);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error submitting move-out form:', error);
+                        alert('ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้');
+                    });
+            });
+        }
+
+        function handleSlipUpload() {
+    const form = document.getElementById('slip-upload-form');
+    const statusDiv = document.getElementById('upload-status');
+    const submitBtn = document.getElementById('upload-slip-btn');
+
+    form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        statusDiv.style.display = 'none';
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'กำลังอัปโหลด...';
+
+        const formData = new FormData(form);
+        const paymentId = document.getElementById('paymentId').value;
+        if (!paymentId) {
+            showStatus('ไม่พบ ID การชำระเงิน กรุณารีเฟรชหน้า', 'error');
+            submitBtn.disabled = false;
+            return;
+        }
+        formData.set('paymentId', paymentId);
+
+        try {
+            const response = await fetch('/api/upload-slip', {
+                method: 'POST',
+                body: formData
+            });
+
+            const result = await response.json();
+
+            if (response.ok && result.success) {
+                showStatus('อัปโหลดสลิปสำเร็จ!', 'success');
+                form.reset();
+                // อาจจะโหลดข้อมูลการชำระเงินใหม่
+                fetchBillingDetails(); 
+            } else {
+                showStatus(result.error || 'เกิดข้อผิดพลาดในการอัปโหลด', 'error');
+            }
+        } catch (error) {
+            showStatus('การเชื่อมต่อล้มเหลว กรุณาลองใหม่อีกครั้ง', 'error');
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'อัปโหลดสลิป';
+        }
+    });
+
+    function showStatus(message, type) {
+        statusDiv.className = type;
+        statusDiv.textContent = message;
+        statusDiv.style.display = 'block';
+    }
+}
+
+        function setupSidebarNavigation() {
+            const sidebarLinks = document.querySelectorAll('.sidebar-menu a[data-target]');
+            const contentPanels = document.querySelectorAll('.main-content .content-panel');
+            const mainTitle = document.getElementById('main-title');
+
+            sidebarLinks.forEach(link => {
+                link.addEventListener('click', (event) => {
+                    event.preventDefault();
+                    const targetId = link.getAttribute('data-target');
+
+                    sidebarLinks.forEach(item => item.classList.remove('active'));
+                    link.classList.add('active');
+
+                    contentPanels.forEach(panel => panel.classList.remove('active'));
+                    const targetPanel = document.getElementById(targetId);
+                    if (targetPanel) {
+                        targetPanel.classList.add('active');
+                    }
+
+                    mainTitle.textContent = link.querySelector('span').textContent;
+                });
+            });
+        }
+
+        setupSidebarNavigation();
+        handleNewRepairSubmit();
+        handleSlipUpload();
+        handleContactFormSubmit();
+        handleMoveOutSubmit();
+
+        fetchDashboardData();
+        fetchBillingDetails();
+        fetchAnnouncements();
+        loadRepairs();
+        fetchContractDetails();
+        fetchProfileData();
+    });
+</script>
+</body>
+</html>

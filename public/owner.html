@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard เจ้าของหอพัก</title>
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+  />
+  <link rel="stylesheet" href="/css/owner.css" />
+   
+<style>
+/* hide legacy booking action buttons (safety) */
+.bk-schedule,.bk-note,.bk-convert,.bk-deposit{display:none!important;}
+</style>
+</head>
+<body>
+<nav class="sidebar">
+  <div class="sidebar-header">
+    <i class="fa-solid fa-house"></i>
+    <span>บ้านพักค้น (เจ้าของ)</span>
+  </div>
+  <ul class="sidebar-nav">
+    <li id="nav-overview" class="active"><a><i class="fa-solid fa-chart-pie"></i> ภาพรวม</a></li>
+    <li id="nav-tenants"><a><i class="fa-solid fa-users"></i> จัดการผู้เช่า</a></li>
+    <li id="nav-rooms"><a><i class="fa-solid fa-building"></i> จัดการห้องพัก</a></li>
+    <li id="nav-accounting"><a><i class="fa-solid fa-file-invoice-dollar"></i> บัญชีและการเงิน</a></li>
+    <li id="nav-repairs"><a><i class="fa-solid fa-screwdriver-wrench"></i> รายการแจ้งซ่อม</a></li>
+    <li id="nav-contracts"><a><i class="fa-solid fa-handshake"></i> จัดการสัญญาเช่า</a></li>
+    <li id="nav-bookings"><a><i class="fa-solid fa-calendar-check"></i> คำขอจอง</a></li>
+    <li id="nav-announcements"><a><i class="fa-solid fa-bullhorn"></i> ประกาศ/ข่าวสาร</a></li>
+    <li id="nav-billing"><a><i class="fa-solid fa-bolt"></i> ค่าเช่า/ค่าน้ำ/ค่าไฟ</a></li>
+    <li id="nav-wizard"><a><i class="fa-solid fa-person-walking-arrow-right"></i> ย้ายเข้า/ย้ายออก</a></li>
+    <li id="nav-reports"><a><i class="fa-solid fa-chart-line"></i> รายงานและสถิติ</a></li>
+  </ul>
+  <div class="sidebar-footer">
+    <a href="/logout"><i class="fa-solid fa-right-from-bracket"></i><span>ออกจากระบบ</span></a>
+  </div>
+</nav>
+
+<main class="main-content">
+  <header class="header">
+  <h1 id="main-header">ภาพรวม</h1>
+  <div class="quick-actions">
+    <button id="qa-add-tenant" class="btn btn-primary"><i class="fa-solid fa-user-plus"></i> เพิ่มผู้เช่าใหม่</button>
+    <button id="qa-create-bills" class="btn btn-secondary"><i class="fa-solid fa-file-invoice-dollar"></i> สร้างบิลเดือนนี้</button>
+    <button id="qa-send-ann" class="btn btn-tertiary"><i class="fa-solid fa-bullhorn"></i> ส่งประกาศ</button>
+  </div>
+  <div class="user-welcome" id="welcome-text">สวัสดี, เจ้าของหอพัก</div>
+</header>
+
+  <div id="overview-section" class="content-section">
+    <section class="summary-cards">
+      <div class="card">
+        <div class="icon purple"><i class="fa-solid fa-door-open"></i></div>
+        <div class="info">
+          <h3>ห้องว่าง</h3>
+          <p>--</p>
+        </div>
+      </div>
+      <div class="card">
+        <div class="icon orange"><i class="fa-solid fa-user-clock"></i></div>
+        <div class="info">
+          <h3>ค้างชำระ</h3>
+          <p>--</p>
+        </div>
+      </div>
+      <div class="card">
+        <div class="icon blue"><i class="fa-solid fa-tools"></i></div>
+        <div class="info">
+          <h3>แจ้งซ่อมรอดำเนินการ</h3>
+          <p>--</p>
+        </div>
+      </div>
+      <div class="card">
+        <div class="icon green"><i class="fa-solid fa-baht-sign"></i></div>
+        <div class="info">
+          <h3>รายรับเดือนนี้</h3>
+          <p>--</p>
+        </div>
+      </div>
+    <div class="card">
+        <div class="icon blue"><i class="fa-solid fa-chart-line"></i></div>
+        <div class="info">
+          <h3>อัตราการเข้าพัก</h3>
+          <p><span id="occupancyPct">--%</span> <span class="muted">(<span id="occupiedCount">-</span>/<span id="totalRooms">-</span>)</span></p>
+        </div>
+      </div>
+      <div class="card">
+        <div class="icon orange"><i class="fa-solid fa-file-circle-check"></i></div>
+        <div class="info">
+          <h3>รออนุมัติสลิป</h3>
+          <p id="pendingApprovals">--</p>
+        </div>
+      </div>
+      <div class="card" style="grid-column: span 2;">
+        <div class="icon green"><i class="fa-solid fa-battery-three-quarters"></i></div>
+        <div class="info" style="flex:1">
+          <h3>อัตราการเก็บเงินเดือนนี้</h3>
+          <p><span id="collectionRateText">--%</span></p>
+          <div class="progress"><div id="collectionRateBar" class="progress-bar"></div></div>
+        </div>
+      </div>
+    </section>
+    <section class="alerts">
+      <div class="alerts-header">
+        <i class="fa-solid fa-bell"></i><span>การแจ้งเตือนด่วน</span>
+      </div>
+      <div class="alert-list">
+        <div class="alert-item">กำลังโหลด...</div>
+      </div>
+    </section>
+<section class="overview-panels" style="margin-top:20px; display:grid; grid-template-columns: repeat(auto-fit, minmax(300px,1fr)); gap: 20px;">
+      <div class="panel">
+        <h3><i class="fa-solid fa-file-signature"></i> สัญญาใกล้หมดอายุ (30 วัน)</h3>
+        <ul id="expiringLeasesList" class="simple-list">
+          <li class="muted">กำลังโหลด...</li>
+        </ul>
+      </div>
+      <div class="panel">
+        <h3><i class="fa-solid fa-triangle-exclamation"></i> ผู้เช่าค้างชำระสูงสุด</h3>
+        <ul id="topOverdueList" class="simple-list">
+          <li class="muted">กำลังโหลด...</li>
+        </ul>
+      </div>
+    </section>
+  </div>
+
+  
+  <div id="bookings-section" class="content-section hidden">
+    <section class="tenant-section">
+      <div class="tenant-header">
+        <h2><i class="fa-solid fa-calendar-check"></i> คำขอจองดูห้อง</h2>
+        <div class="tenant-actions">
+          <select id="bk-status" class="simple-select">
+            <option value="all">ทั้งหมด</option>
+            <option value="new">ใหม่</option>
+            <option value="contacted">ติดต่อแล้ว</option>
+            <option value="scheduled">ได้นัดหมาย</option>
+            <option value="approved">อนุมัติ</option>
+            <option value="rejected">ปฏิเสธ</option>
+            <option value="converted">แปลงเป็นผู้เช่า</option>
+          </select>
+          <div class="search-tenant">
+            <input id="bk-q" type="text" placeholder="ค้นหา (ชื่อ, โทร, อีเมล, ประเภทห้อง)..." />
+          </div>
+        </div>
+      </div>
+
+      <table class="tenant-table">
+        <thead>
+          <tr>
+            <th>วันที่ส่ง</th>
+            <th>ผู้จอง</th>
+            <th>ติดต่อ</th>
+            <th>รายละเอียด</th></tr>
+        </thead>
+        <tbody id="bk-tbody">
+          <tr><td colspan="4" class="muted">ยังไม่มีข้อมูล</td></tr>
+        </tbody>
+      </table>
+    </section>
+  </div>
+<div id="tenants-section" class="content-section hidden">
+    <section class="tenant-section">
+      <div class="tenant-header">
+        <h2><i class="fa-solid fa-users"></i> รายชื่อผู้เช่าทั้งหมด</h2>
+        <div class="tenant-actions">
+          <button class="add-tenant-btn"><i class="fa-solid fa-plus"></i> เพิ่มผู้เช่าใหม่</button>
+          <div class="search-tenant">
+            <input type="text" placeholder="ค้นหาผู้เช่า (ชื่อ, ห้อง)..." />
+          </div>
+          </div>
+      </div>
+      <table class="tenant-table">
+        <thead>
+          <tr>
+            <th>ห้อง</th>
+            <th>ชื่อ-สกุล</th>
+            <th>เบอร์โทร</th></tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </section>
+  </div>
+
+  <div id="rooms-section" class="content-section hidden">
+    <section class="tenant-section">
+      <div class="tenant-header">
+        <h2><i class="fa-solid fa-building"></i> จัดการข้อมูลห้องพัก</h2>
+        <div class="tenant-actions">
+          <button class="add-tenant-btn" style="background-color: #5d6d7e;">
+            <i class="fa-solid fa-plus"></i> เพิ่มห้องใหม่
+          </button>
+        </div>
+      </div>
+      <table class="tenant-table">
+        <thead>
+          <tr>
+            <th>เลขที่ห้อง</th>
+            <th>ประเภท</th>
+            <th>ค่าเช่า</th><th>ผู้เข้าพัก</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </section>
+  </div>
+
+  <div id="accounting-section" class="content-section hidden">
+  <section class="tenant-section">
+    <div class="tenant-header">
+      <h2><i class="fa-solid fa-file-invoice-dollar"></i> ภาพรวมการเงิน</h2>
+      <div class="filter-actions">
+        <select id="acc-month-filter" aria-label="เลือกเดือน"></select>
+        <select id="acc-year-filter" aria-label="เลือกปี"></select>
+        <button class="export-btn">
+          <i class="fa-solid fa-file-excel"></i> ดาวน์โหลดรายงาน Excel
+        </button>
+      </div>
+    </div>
+
+    <div class="table-wrap table-elevated">
+      <table class="tenant-table financial-table table-sticky" id="accounting-table">
+        <thead>
+          <tr>
+            <th style="width:8rem">ห้อง</th>
+            <th>ผู้เช่า</th>
+            <th class="text-right">ยอด (บาท)</th><th>หลักฐาน</th>
+            <th>อนุมัติ</th>
+            <th>ปฏิเสธ</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="table-empty"><td colspan="7">กำลังโหลดข้อมูล...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>
+
+  <section id="repairs-section" class="content-section hidden">
+    <div class="tenant-section">
+      <div class="tenant-header">
+        <h2><i class="fa-solid fa-tools"></i> รายการแจ้งซ่อม</h2>
+        <div class="filter-actions">
+          <select id="repair-status-filter">
+            <option value="all">ทั้งหมด</option>
+            <option value="pending">รอดำเนินการ</option>
+            <option value="inprogress">กำลังดำเนินการ</option>
+            <option value="done">ซ่อมเสร็จแล้ว</option>
+          </select>
+            <input id="repair-search" type="search" placeholder="ค้นหา (ห้อง/ประเภท/รายละเอียด/ผู้เช่า)" style="margin-left:8px; padding:6px 10px; min-width:220px;">
+            <input id="repair-date-from" type="date" style="margin-left:8px; padding:6px 10px;">
+            <input id="repair-date-to" type="date" style="margin-left:6px; padding:6px 10px;">
+            <button id="repair-filter-reset" style="margin-left:8px; padding:6px 10px;">รีเซ็ต</button>
+            <button id="repair-refresh" style="margin-left:6px; padding:6px 10px;">รีเฟรช</button>
+        </div>
+      </div>
+      <div id="repair-summary" style="padding:6px 12px; font-size:0.95em; color:#555;"></div>
+      <div class="repair-list"></div>
+    </div>
+  </section>
+
+  <div id="add-tenant-modal" class="modal-overlay hidden">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>เพิ่มผู้เช่าใหม่</h3>
+      <button class="close-modal-btn" data-close-add-tenant>&times;</button>
+    </div>
+    <form id="add-tenant-form">
+      <div class="billing-form-grid">
+        <div class="form-group">
+          <label>ชื่อ-สกุล</label>
+          <input type="text" name="name" required />
+        </div>
+        <div class="form-group">
+          <label>อีเมล</label>
+          <input type="email" name="email" required />
+        </div>
+        <div class="form-group">
+          <label>เบอร์โทร</label>
+          <input type="text" name="phone" />
+        </div>
+        <div class="form-group">
+          <label>รหัสผ่านเริ่มต้น</label>
+          <input type="password" name="password" required />
+        </div>
+        <div class="form-group">
+          <label>เลือกห้อง (ไม่บังคับ)</label>
+          <select name="roomId" id="add-tenant-room">
+            <option value="">— ไม่ระบุ —</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-actions" style="margin-top:20px;">
+        <button type="submit" class="add-tenant-btn">
+          <i class="fa-solid fa-save"></i> บันทึกผู้เช่า
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Add/Edit Room Modal -->
+<div id="room-modal" class="modal-overlay hidden">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3 id="room-modal-title">เพิ่มห้อง</h3>
+      <button class="close-modal-btn" data-close-room>&times;</button>
+    </div>
+    <form id="room-form">
+      <input type="hidden" name="id" />
+      <div class="billing-form-grid">
+        <div class="form-group">
+          <label>เลขที่ห้อง</label>
+          <input type="text" name="room_number" required />
+        </div>
+        <div class="form-group">
+          <label>ประเภทห้อง</label>
+          <select name="type" id="room-type-select" required></select>
+        </div>
+        <div class="form-group">
+          <label>ค่าเช่า (บาท)</label>
+          <input type="number" name="rent" id="room-rent-display" readonly />
+          <small>ระบบกำหนดอัตโนมัติตามประเภท</small>
+        </div>
+      </div>
+      <div class="modal-actions" style="margin-top:20px;">
+        <button type="submit" class="add-tenant-btn"><i class="fa-solid fa-save"></i> บันทึก</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Edit Tenant Modal -->
+<div id="edit-tenant-modal" class="modal-overlay hidden">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>แก้ไขผู้เช่า</h3>
+      <button class="close-modal-btn" data-close-edit>&times;</button>
+    </div>
+    <form id="edit-tenant-form">
+      <input type="hidden" name="id" />
+      <div class="billing-form-grid">
+        <div class="form-group">
+          <label>ชื่อ-สกุล</label>
+          <input type="text" name="name" required />
+        </div>
+        <div class="form-group">
+          <label>อีเมล</label>
+          <input type="email" name="email" required />
+        </div>
+        <div class="form-group">
+          <label>เบอร์โทร</label>
+          <input type="text" name="phone" />
+        </div>
+        <div class="form-group">
+          <label>รหัสผ่านใหม่ (เว้นว่างถ้าไม่เปลี่ยน)</label>
+          <input type="password" name="password" />
+        </div>
+      </div>
+      <div class="modal-actions" style="margin-top:20px;">
+        <button type="submit" class="btn btn-primary">
+          <i class="fa-solid fa-save"></i> บันทึกการแก้ไข
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Move Room Modal -->
+<div id="move-room-modal" class="modal-overlay hidden">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>ย้ายห้อง</h3>
+      <button class="close-modal-btn" data-close-move-room>&times;</button>
+    </div>
+    <form id="move-room-form">
+      <input type="hidden" name="id" />
+      <div class="form-group">
+        <label>เลือกห้องใหม่</label>
+        <select name="newRoomId" id="move-room-select" required></select>
+      </div>
+      <div class="modal-actions" style="margin-top:20px;">
+        <button type="submit" class="btn btn-primary">
+          <i class="fa-solid fa-right-left"></i> ยืนยันการย้ายห้อง
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Move Out Modal -->
+<div id="moveout-modal" class="modal-overlay hidden">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>ย้ายออก / Checkout</h3>
+      <button class="close-modal-btn" data-close-moveout>&times;</button>
+    </div>
+    <form id="moveout-form">
+      <input type="hidden" name="id" />
+      <div class="billing-form-grid">
+        <div class="form-group">
+          <label>วันที่ย้ายออก</label>
+          <input type="date" name="moveOutDate" />
+        </div>
+        <div class="form-group">
+          <label>บันทึก/หมายเหตุ</label>
+          <input type="text" name="notes" />
+        </div>
+        <div class="form-group">
+          <label><input type="checkbox" name="createFinalBill" /> สร้างบิลสุดท้าย</label>
+          <input type="number" step="0.01" name="finalAmount" placeholder="ยอดบิลสุดท้าย (บาท)" />
+        </div>
+      </div>
+      <div class="modal-actions" style="margin-top:20px;">
+        <button type="submit" class="btn btn-danger">
+          <i class="fa-solid fa-door-open"></i> ยืนยันย้ายออก
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Bills Modal -->
+<div id="bills-modal" class="modal-overlay hidden">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>ประวัติใบแจ้งหนี้/บิล</h3>
+      <button class="close-modal-btn" data-close-bills>&times;</button>
+    </div>
+    <div id="bills-list" class="simple-list" style="max-height:300px; overflow:auto;">
+      <div class="muted">กำลังโหลด...</div>
+    </div>
+  </div>
+</div>
+
+  </div>
+
+  <div id="contracts-section" class="content-section hidden">
+    <section class="tenant-section">
+      <div class="tenant-header">
+        <h2><i class="fa-solid fa-handshake"></i> สัญญาเช่าทั้งหมด</h2>
+        <div class="tenant-actions">
+          <button class="add-tenant-btn">
+            <i class="fa-solid fa-plus"></i> เพิ่มสัญญาเช่าใหม่
+          </button>
+        </div>
+      </div>
+      <table class="tenant-table">
+        <thead>
+          <tr>
+            <th>ห้อง</th>
+            <th>ผู้เช่า</th>
+            <th>วันที่เริ่มสัญญา</th>
+            <th>วันที่สิ้นสุดสัญญา</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td colspan="6" style="text-align: center;">กำลังโหลดข้อมูล...</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+  </div>
+
+  <div id="announcements-section" class="content-section hidden">
+    <section class="tenant-section">
+      <div class="tenant-header">
+        <h2><i class="fa-solid fa-bullhorn"></i> สร้างประกาศใหม่</h2>
+      </div>
+      <form id="announcement-form" class="announcement-form">
+        <div class="form-group">
+          <label for="announcement-title">หัวข้อ</label>
+          <input type="text" id="announcement-title" name="title" required />
+        </div>
+        <div class="form-group">
+          <label for="announcement-content">เนื้อหา</label>
+          <textarea id="announcement-content" name="content" rows="8" required></textarea>
+        </div>
+        <div class="form-group">
+          <label for="announcement-recipient">ส่งถึง</label>
+<select id="announcement-recipient" name="recipient" style="width:100%; height:40px;">
+  <option value="all" selected>ผู้เช่าทั้งหมด</option>
+</select>
+<small style="display:block;margin-top:6px;color:#555;">
+  เลือก “ผู้เช่าทั้งหมด” หรือเลือกห้องใดห้องหนึ่ง
+</small>
+
+        </div>
+        <div class="form-group">
+          <button type="submit" class="add-tenant-btn">ส่งประกาศ</button>
+        </div>
+      </form>
+    </section>
+  </div>
+
+  <div id="billing-section" class="content-section hidden">
+    <section class="tenant-section">
+      <div class="tenant-header">
+        <h2><i class="fa-solid fa-file-invoice"></i> สร้างและจัดการบิล</h2>
+        <div class="filter-actions">
+          <select id="billing-month-filter"></select>
+          <select id="billing-year-filter"></select>
+          <button id="generate-bills-btn" class="add-tenant-btn" style="background-color: #27ae60;">
+            <i class="fa-solid fa-bolt"></i> สร้างบิลเดือนนี้
+          </button>
+        </div>
+      </div>
+<table class="tenant-table" id="billing-table">
+  <thead>
+    <tr>
+      <th>ห้อง</th>
+      <th>ผู้เช่า</th>
+      <th>ค่าเช่า</th>
+      <th>ค่าน้ำ</th>
+      <th>ค่าไฟ</th>
+      <th>ยอดรวม</th></tr>
+  </thead>
+  <tbody></tbody>
+</table>
+
+    </section>
+  </div>
+
+  <div id="billing-modal" class="modal-overlay hidden">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="modal-title">จัดการบิลห้อง A101 - กันยายน 2568</h3>
+        <button class="close-modal-btn">&times;</button>
+      </div>
+      <form id="billing-details-form">
+        <input type="hidden" id="billing-id" name="billingId" />
+        <div class="billing-form-grid">
+          <div class="form-group">
+            <label>ค่าเช่า (บาท)</label>
+            <input type="number" id="bill-rent" name="rent" readonly />
+          </div>
+          <div class="form-group">
+            <label>ค่าใช้จ่ายอื่นๆ (บาท)</label>
+            <input type="number" id="bill-others" name="others" value="0" step="0.01" />
+          </div>
+        </div>
+        <hr />
+        <h4><i class="fa-solid fa-droplet"></i> ค่าน้ำ</h4>
+        <div class="billing-form-grid">
+          <div class="form-group">
+            <label>มิเตอร์ก่อนหน้า</label>
+            <input type="number" id="bill-water-prev" name="waterPrev" readonly />
+          </div>
+          <div class="form-group">
+            <label>มิเตอร์ปัจจุบัน</label>
+            <input type="number" id="bill-water-curr" name="waterCurr" required />
+          </div>
+          <div class="form-group">
+            <label>หน่วยที่ใช้</label>
+            <input type="text" id="bill-water-units" readonly />
+          </div>
+          <div class="form-group">
+            <label>รวมค่าน้ำ (บาท)</label>
+            <input type="text" id="bill-water-total" readonly />
+          </div>
+        </div>
+        <hr />
+        <h4><i class="fa-solid fa-lightbulb"></i> ค่าไฟ</h4>
+        <div class="billing-form-grid">
+          <div class="form-group">
+            <label>มิเตอร์ก่อนหน้า</label>
+            <input type="number" id="bill-elec-prev" name="elecPrev" readonly />
+          </div>
+          <div class="form-group">
+            <label>มิเตอร์ปัจจุบัน</label>
+            <input type="number" id="bill-elec-curr" name="elecCurr" required />
+          </div>
+          <div class="form-group">
+            <label>หน่วยที่ใช้</label>
+            <input type="text" id="bill-elec-units" readonly />
+          </div>
+          <div class="form-group">
+            <label>รวมค่าไฟ (บาท)</label>
+            <input type="text" id="bill-elec-total" readonly />
+          </div>
+        </div>
+        <hr />
+        <div class="modal-summary">
+          <h3>ยอดรวมที่ต้องชำระ: <span id="bill-grand-total">0.00</span> บาท</h3>
+        </div>
+        <div class="modal-actions">
+          <button type="submit" class="add-tenant-btn">
+            <i class="fa-solid fa-save"></i> บันทึกและแจ้งยอด
+          </button>
+          <button type="button" id="mark-as-paid-btn" class="add-tenant-btn" style="background-color: #2ecc71;">
+            <i class="fa-solid fa-check"></i> ชำระเงินแล้ว
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+<div id="settings-section" class="content-section hidden">
+  <section class="tenant-section">
+    <div class="tenant-header"><h2><i class="fa-solid fa-gear"></i> ตั้งค่าอัตราค่าน้ำ/ค่าไฟ และประเภทห้อง</h2></div>
+    <div class="grid" style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+      <div class="card">
+        <h3>อัตราค่าน้ำ/ค่าไฟ</h3>
+        <form id="utility-rate-form">
+          <label>ค่าน้ำ (บาท/หน่วย)</label>
+          <input type="number" step="0.01" name="water" required />
+          <label>ค่าไฟ (บาท/หน่วย)</label>
+          <input type="number" step="0.01" name="elec" required />
+          <label>หมายเหตุ</label>
+          <input type="text" name="notes" />
+          <button type="submit" class="add-tenant-btn">บันทึกอัตรา</button>
+        </form>
+      </div>
+      <div class="card">
+        <h3>ประเภทห้อง</h3>
+        <form id="room-type-form" style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;">
+          <div style="flex:1;min-width:140px;">
+            <label>Key</label>
+            <input type="text" name="key" placeholder="เช่น air" required />
+          </div>
+          <div style="flex:2;min-width:200px;">
+            <label>ชื่อแสดงผล</label>
+            <input type="text" name="label" placeholder="ห้องแอร์" required />
+          </div>
+          <div style="flex:1;min-width:140px;">
+            <label>ค่าเช่าพื้นฐาน</label>
+            <input type="number" step="1" name="base_rent" required />
+          </div>
+          <button type="submit" class="add-tenant-btn">เพิ่ม</button>
+        </form>
+        <table class="tenant-table" id="room-types-table" style="margin-top:10px;">
+          <thead><tr><th>Key</th><th>ชื่อ</th><th>ค่าเช่า</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+</div>
+
+<div id="reports-section" class="content-section hidden">
+  <section class="tenant-section">
+    <div class="tenant-header"><h2><i class="fa-solid fa-chart-line"></i> รายงาน</h2></div>
+    <div class="card" id="report-occupancy" style="margin-bottom:12px;"></div>
+    <table class="tenant-table">
+      <thead><tr><th>เดือน</th><th>รายได้รวม (บาท)</th></tr></thead>
+      <tbody id="report-revenue-body"></tbody>
+    </table>
+  </section>
+</div>
+
+<div id="wizard-section" class="content-section hidden">
+  <section class="tenant-section">
+    <div class="tenant-header"><h2><i class="fa-solid fa-person-walking-arrow-right"></i> ย้ายเข้า / ย้ายออก</h2></div>
+    <div class="grid" style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+      <div class="card">
+        <h3>ย้ายเข้า (Move-in)</h3>
+        <form id="move-in-form">
+          <label>ผู้เช่า (ยังไม่มีห้อง)</label>
+          <select name="tenant_id" id="movein-tenant"></select>
+          <label>ห้องว่าง</label>
+          <select name="room_id" id="movein-room"></select>
+          <label>เริ่มสัญญา</label>
+          <input type="date" name="start_date" required />
+          <label>สิ้นสุดสัญญา</label>
+          <input type="date" name="end_date" required />
+          <button type="submit" class="add-tenant-btn">ดำเนินการย้ายเข้า</button>
+        </form>
+      </div>
+      <div class="card">
+        <h3>ย้ายออก (Move-out)</h3>
+        <form id="move-out-form">
+          <label>สัญญา (active)</label>
+          <select name="lease_id" id="moveout-lease"></select>
+          <label>หมายเหตุ</label>
+          <input type="text" name="note" placeholder="เช่น อ่านมิเตอร์/หักมัดจำ" />
+          <button type="submit" class="btn btn-secondary">ดำเนินการย้ายออก</button>
+        </form>
+      </div>
+    </div>
+  </section>
+</div>
+</main>
+<script src="/js/owner.js">
+</script>
+</body>
+</html>
